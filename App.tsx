@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './src/screens/HomeScreen';
 import ListScreen from './src/screens/ListScreen';
 import NewListScreen from './src/screens/NewListScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import { RootStackParamList } from './src/types';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -11,21 +12,26 @@ const Stack = createStackNavigator<RootStackParamList>();
 function App(): React.JSX.Element {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName='Home'>
         <Stack.Screen
-          name="Home"
+          name='Home'
           component={HomeScreen}
-          options={{ title: 'Shopping Lists'}}
+          options={{ title: 'EzShop'}}
         />
         <Stack.Screen
-          name="List"
+          name='List'
           component={ListScreen}
           options={({ route }) => ({ title: route?.params?.listName || 'Detail of the List' })} 
         />
         <Stack.Screen
-          name="NewList"
+          name='NewList'
           component={NewListScreen}
           options={{ title: 'Add New List'}}
+        />
+        <Stack.Screen
+          name='Settings'
+          component={SettingsScreen}
+          options={{ title: 'Settings'}}
         />
       </Stack.Navigator>
     </NavigationContainer>
