@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { ProgressBar } from 'react-native-paper';
-import { createItem, readItems, updateItem, deleteItem } from '../services/storageService'; // Import service
 import ItemTile from '../components/ItemTile';
 
 type ListScreenProps = {
@@ -20,28 +20,57 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
   const [editQuantity, setEditQuantity] = useState<string>(''); 
   const [editUnit, setEditUnit] = useState('');
 
-  const ITEMS_KEY = `items_${listId}`;
-
   // Načtení položek ze seznamu
   const loadItems = async () => {
-    const loadedItems = await readItems(ITEMS_KEY);
-    setItems(loadedItems);
+    try {
+      const jsonValue = await AsyncStorage.getItem(`items_${listId}`);
+      if (jsonValue != null) {
+        setItems(JSON.parse(jsonValue));
+      }
+    } catch (e) {
+      console.log('Failed to load items from storage.');
+    }
   };
 
-  // Uložení položek a aktualizace shoppingLists
+  // Aktualizace shoppingLists po přidání, úpravě nebo smazání položek
+  const updateShoppingLists = async (updatedItems: typeof items) => {
+    try {
+      const jsonLists = await AsyncStorage.getItem('shoppingLists');
+      if (jsonLists != null) {
+        const shoppingLists = JSON.parse(jsonLists);
+        const updatedLists = shoppingLists.map((list: { id: string; name: string; items: typeof items }) => 
+          list.id === listId ? { ...list, items: updatedItems } : list
+        );
+        console.log("Updating shopping lists: ", updatedLists);
+        await AsyncStorage.setItem('shoppingLists', JSON.stringify(updatedLists));
+      }
+    } catch (e) {
+      console.log('Failed to update shoppingLists.');
+    }
+  };
+
+  // Uložení položek
   const saveItems = async (updatedItems: typeof items) => {
-    await updateItem('shoppingLists', { id: listId, items: updatedItems }, 'id');
-    setItems(updatedItems);
+    try {
+      const jsonValue = JSON.stringify(updatedItems);
+      await AsyncStorage.setItem(`items_${listId}`, jsonValue);
+      // Aktualizace shoppingLists v AsyncStorage
+      updateShoppingLists(updatedItems);
+    } catch (e) {
+      console.log('Failed to save items to storage.');
+    }
   };
 
   // Otevření modalu pro přidání nebo úpravu
   const openModal = (itemId?: string, itemName?: string, itemQuantity?: string, itemUnit?: string) => {
     if (itemId) {
+      // Úprava existující položky
       setSelectedItem({ id: itemId, name: itemName || '', quantity: itemQuantity, unit: itemUnit });
       setEditName(itemName || '');
       setEditQuantity(itemQuantity || '');
       setEditUnit(itemUnit || '');
     } else {
+      // Přidání nové položky
       setSelectedItem(null);
       setEditName('');
       setEditQuantity('');
@@ -51,7 +80,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
   };
 
   // Přidání nebo úprava položky
-  const saveOrEditItem = () => {
+  const saveItem = () => {
     if (editName.trim() === '') return;
 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
@@ -61,14 +90,17 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
       return;
     }
 
-    let updatedItems;
     if (selectedItem) {
-      updatedItems = items.map((item) =>
+      // Úprava existující položky
+      const updatedItems = items.map((item) =>
         item.id === selectedItem.id
           ? { ...item, name: editName, quantity: sanitizedQuantity, unit: editUnit }
           : item
       );
+      setItems(updatedItems);
+      saveItems(updatedItems);
     } else {
+      // Přidání nové položky
       const newItem = {
         id: Math.random().toString(),
         name: editName,
@@ -76,18 +108,22 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
         unit: editUnit,
         purchased: false,
       };
-      updatedItems = [...items, newItem];
+      const updatedItems = [...items, newItem];
+      setItems(updatedItems);
+      saveItems(updatedItems);
     }
-    
-    saveItems(updatedItems);
+
     setModalVisible(false);
   };
 
   // Smazání položky
-  const deleteItemFromList = (itemId: string) => {
-    const updatedItems = items.filter((item) => item.id !== itemId);
-    saveItems(updatedItems);
-    setModalVisible(false)
+  const deleteItem = () => {
+    if (selectedItem) {
+      const updatedItems = items.filter((item) => item.id !== selectedItem.id);
+      setItems(updatedItems);
+      saveItems(updatedItems);
+      setModalVisible(false);
+    }
   };
 
   useEffect(() => {
@@ -96,13 +132,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      {items.length > 0 && (
-        <ProgressBar
-          progress={items.length ? items.filter(item => item.purchased).length / items.length : 0}
-          color='#3498db'
-          style={styles.progressBar}
-        />
-      )}
+      {items.length > 0 && <ProgressBar progress={items.length ? items.filter(item => item.purchased).length / items.length : 0} color='#3498db' style={styles.progressBar} />}
 
       <FlatList
         data={items}
@@ -118,9 +148,10 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               const updatedItems = items.map(i =>
                 i.id === itemId ? { ...i, purchased: !i.purchased } : i
               );
+              setItems(updatedItems);
               saveItems(updatedItems);
             }}
-            onOptionsPress={() => openModal(item.id, item.name, item.quantity, item.unit)}
+            onOptionsPress={() => openModal(item.id, item.name, item.quantity, item.unit)} // Otevřít modal pro editaci
           />
         )}
       />
@@ -130,7 +161,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
         <Text style={styles.addButtonText}>+ Add Item</Text>
       </TouchableOpacity>
 
-      {/* Modal pro přidání nebo úpravu položky */}
+      {/* Jeden modal pro přidání nebo úpravu položky */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -158,12 +189,12 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               maxLength={10}
             />
 
-            <TouchableOpacity style={styles.modalSaveButton} onPress={saveOrEditItem}>
+            <TouchableOpacity style={styles.modalSaveButton} onPress={saveItem}>
               <Text style={styles.modalSaveButtonText}>{selectedItem ? 'Save' : 'Add Item'}</Text>
             </TouchableOpacity>
 
             {selectedItem && (
-              <TouchableOpacity style={styles.modalDeleteButton} onPress={() => deleteItemFromList(selectedItem.id)}>
+              <TouchableOpacity style={styles.modalDeleteButton} onPress={deleteItem}>
                 <Text style={styles.modalDeleteButtonText}>Delete</Text>
               </TouchableOpacity>
             )}
