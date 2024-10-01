@@ -159,30 +159,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#333',
-  },
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    marginBottom: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  listName: {
-    fontSize: 18,
-  },
-  iconTouchable: {
-    paddingHorizontal: 3,
+    color: '#2c3e50'
   },
   addButton: {
     backgroundColor: '#3498db',
