@@ -1,29 +1,39 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ProgressBar } from 'react-native-paper';
 
-type ShoppingListProps = {
+type ShoppingListTileProps = {
   listId: string;
   listName: string;
-  onPress: () => void; // Funkce, která se spustí po kliknutí na seznam
-  onOptionsPress: () => void; // Funkce, která se spustí po kliknutí na tři tečky
+  items: { id: string; purchased: boolean }[];
+  onPress: () => void;
+  onOptionsPress: () => void;
 };
 
-const ShoppingList: React.FC<ShoppingListProps> = ({ listId, listName, onPress, onOptionsPress }) => {
+
+const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listId, listName, items, onPress, onOptionsPress }) => {
+  // Výpočet progressu - zakoupené položky vůči celkovým položkám
+  const purchasedCount = items.filter(item => item.purchased).length;
+  const totalCount = items.length;
+  const progress = totalCount > 0 ? purchasedCount / totalCount : 0;
+  
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.listItem}>
+    <TouchableOpacity onPress={onPress} style={styles.container}>
+      <View style={styles.textContainer}>
         <Text style={styles.listName}>{listName}</Text>
-        <TouchableOpacity onPress={onOptionsPress} style={styles.iconTouchable}>
-          <Ionicons name="ellipsis-vertical" size={24} color="#333" />
-        </TouchableOpacity>
+        {totalCount > 0 && (
+          <ProgressBar progress={progress} color="#3498db" style={styles.progressBar} />
+        )}
       </View>
+      <TouchableOpacity onPress={onOptionsPress} style={styles.optionsButton}>
+        <Text>⋮</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  listItem: {
+  container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -32,17 +42,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+  },
+  textContainer: {
+    flex: 1,
+    marginRight: 10,
   },
   listName: {
     fontSize: 18,
+    fontWeight: 'bold',
   },
-  iconTouchable: {
-    padding: 10, // Zóna pro snadnější klikání
+  progressBar: {
+    marginTop: 5,
+    height: 10,
+    borderRadius: 5,
+  },
+  optionsButton: {
+    padding: 10,
   },
 });
 
-export default ShoppingList;
+export default ShoppingListTile;
