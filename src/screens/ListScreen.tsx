@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { ProgressBar } from 'react-native-paper';
-import ItemTile from '../components/ItemTile'; // Importování nové komponenty
+import { createItem, readItems, updateItem, deleteItem } from '../services/storageService'; // Import service
+import ItemTile from '../components/ItemTile';
 
 type ListScreenProps = {
   route: RouteProp<RootStackParamList, 'List'>;
@@ -13,72 +13,96 @@ type ListScreenProps = {
 const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
   const { listId } = route.params;
 
-  // Stav pro položky v seznamu
-  const [items, setItems] = useState<{ id: string; name: string; purchased: boolean }[]>([]);
-  const [newItem, setNewItem] = useState('');
+  const [items, setItems] = useState<{ id: string; name: string; quantity?: string; unit?: string; purchased: boolean }[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; quantity?: string; unit?: string } | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editQuantity, setEditQuantity] = useState<string>(''); 
+  const [editUnit, setEditUnit] = useState('');
 
-  // Načítání položek při načtení obrazovky
+  const ITEMS_KEY = `items_${listId}`;
+
+  // Načtení položek ze seznamu
   const loadItems = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem(`items_${listId}`);
-      if (jsonValue != null) {
-        setItems(JSON.parse(jsonValue));
-      }
-    } catch (e) {
-      console.log('Failed to load items from storage.');
-    }
+    const loadedItems = await readItems(ITEMS_KEY);
+    setItems(loadedItems);
   };
 
-  // Ukládání položek do AsyncStorage
-  const saveItems = async (updatedItems: { id: string; name: string; purchased: boolean }[]) => {
-    try {
-      const jsonValue = JSON.stringify(updatedItems);
-      await AsyncStorage.setItem(`items_${listId}`, jsonValue);
-    } catch (e) {
-      console.log('Failed to save items to storage.');
-    }
-  };
-
-  // Přidání nové položky
-  const addNewItem = () => {
-    if (newItem.trim() === '') return;
-
-    const item = {
-      id: Math.random().toString(),
-      name: newItem,
-      purchased: false,
-    };
-
-    const updatedItems = [...items, item];
+  // Uložení položek a aktualizace shoppingLists
+  const saveItems = async (updatedItems: typeof items) => {
+    await updateItem('shoppingLists', { id: listId, items: updatedItems }, 'id');
     setItems(updatedItems);
-    saveItems(updatedItems); // Uložit aktualizované položky
-    setNewItem('');
+  };
+
+  // Otevření modalu pro přidání nebo úpravu
+  const openModal = (itemId?: string, itemName?: string, itemQuantity?: string, itemUnit?: string) => {
+    if (itemId) {
+      setSelectedItem({ id: itemId, name: itemName || '', quantity: itemQuantity, unit: itemUnit });
+      setEditName(itemName || '');
+      setEditQuantity(itemQuantity || '');
+      setEditUnit(itemUnit || '');
+    } else {
+      setSelectedItem(null);
+      setEditName('');
+      setEditQuantity('');
+      setEditUnit('');
+    }
+    setModalVisible(true);
+  };
+
+  // Přidání nebo úprava položky
+  const saveOrEditItem = () => {
+    if (editName.trim() === '') return;
+
+    const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
+
+    if (sanitizedQuantity !== '' && isNaN(Number(sanitizedQuantity))) {
+      Alert.alert('Invalid Input', 'Please enter a valid number for the quantity.');
+      return;
+    }
+
+    let updatedItems;
+    if (selectedItem) {
+      updatedItems = items.map((item) =>
+        item.id === selectedItem.id
+          ? { ...item, name: editName, quantity: sanitizedQuantity, unit: editUnit }
+          : item
+      );
+    } else {
+      const newItem = {
+        id: Math.random().toString(),
+        name: editName,
+        quantity: sanitizedQuantity,
+        unit: editUnit,
+        purchased: false,
+      };
+      updatedItems = [...items, newItem];
+    }
+    
+    saveItems(updatedItems);
     setModalVisible(false);
   };
 
-  // Přepnutí stavu položky mezi zakoupenou a nezakoupenou
-  const togglePurchased = (itemId: string) => {
-    const updatedItems = items.map((item) =>
-      item.id === itemId ? { ...item, purchased: !item.purchased } : item
-    );
-    setItems(updatedItems);
+  // Smazání položky
+  const deleteItemFromList = (itemId: string) => {
+    const updatedItems = items.filter((item) => item.id !== itemId);
     saveItems(updatedItems);
+    setModalVisible(false)
   };
 
-  // Procentuální dokončení
-  const purchasedCount = items.filter((item) => item.purchased).length;
-  const totalCount = items.length;
-  const progress = totalCount === 0 ? 0 : purchasedCount / totalCount;
-
-  // Načtení položek při prvním renderování
   useEffect(() => {
     loadItems();
   }, []);
 
   return (
     <View style={styles.container}>
-      <ProgressBar progress={progress} color='#3498db' style={styles.progressBar} />
+      {items.length > 0 && (
+        <ProgressBar
+          progress={items.length ? items.filter(item => item.purchased).length / items.length : 0}
+          color='#3498db'
+          style={styles.progressBar}
+        />
+      )}
 
       <FlatList
         data={items}
@@ -87,30 +111,63 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
           <ItemTile
             id={item.id}
             name={item.name}
+            quantity={item.quantity}
+            unit={item.unit}
             purchased={item.purchased}
-            togglePurchased={togglePurchased}
+            togglePurchased={(itemId) => {
+              const updatedItems = items.map(i =>
+                i.id === itemId ? { ...i, purchased: !i.purchased } : i
+              );
+              saveItems(updatedItems);
+            }}
+            onOptionsPress={() => openModal(item.id, item.name, item.quantity, item.unit)}
           />
         )}
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+      {/* Button pro přidání nové položky */}
+      <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
         <Text style={styles.addButtonText}>+ Add Item</Text>
       </TouchableOpacity>
 
-      {/* Modal pro přidání nové položky */}
-      <Modal visible={modalVisible} animationType='slide' transparent={true}>
+      {/* Modal pro přidání nebo úpravu položky */}
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add new Item</Text>
+            <Text style={styles.modalTitle}>{selectedItem ? 'Edit Item' : 'Add Item'}</Text>
             <TextInput
-              placeholder='Name'
-              value={newItem}
-              onChangeText={setNewItem}
+              placeholder="Name"
+              value={editName}
+              onChangeText={setEditName}
               style={styles.modalInput}
+              maxLength={20}
             />
-            <TouchableOpacity style={styles.modalAddButton} onPress={addNewItem}>
-              <Text style={styles.modalAddButtonText}>Add Item</Text>
+            <TextInput
+              placeholder="Quantity"
+              value={editQuantity}
+              onChangeText={setEditQuantity}
+              style={styles.modalInput}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+            <TextInput
+              placeholder="Unit"
+              value={editUnit}
+              onChangeText={setEditUnit}
+              style={styles.modalInput}
+              maxLength={10}
+            />
+
+            <TouchableOpacity style={styles.modalSaveButton} onPress={saveOrEditItem}>
+              <Text style={styles.modalSaveButtonText}>{selectedItem ? 'Save' : 'Add Item'}</Text>
             </TouchableOpacity>
+
+            {selectedItem && (
+              <TouchableOpacity style={styles.modalDeleteButton} onPress={() => deleteItemFromList(selectedItem.id)}>
+                <Text style={styles.modalDeleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity style={styles.modalCancelButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.modalCancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -170,17 +227,27 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 20,
-    backgroundColor: '#fff',
+    marginBottom: 10,
   },
-  modalAddButton: {
+  modalSaveButton: {
     backgroundColor: '#3498db',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
-  modalAddButtonText: {
+  modalSaveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  modalDeleteButton: {
+    backgroundColor: '#e74c3c',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalDeleteButtonText: {
     color: '#fff',
     fontSize: 16,
   },

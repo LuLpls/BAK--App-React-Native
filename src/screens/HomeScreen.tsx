@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, TextInput, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TextInput, Modal, TouchableOpacity } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { createItem, readItems, updateItem, deleteItem } from '../services/storageService'; // Import CRUD functions
 
 import ShoppingListTile from '../components/ShoppingListTile';
 import Header from '../components/Header';
@@ -13,35 +13,41 @@ type HomeScreenProps = {
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [shoppingLists, setShoppingLists] = useState<{ id: string; name: string }[]>([]);
+  const [shoppingLists, setShoppingLists] = useState<{ id: string; name: string; items: { id: string; purchased: boolean }[] }[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<{ id: string; name: string } | null>(null);
-  const [listNameInput, setListNameInput] = useState(''); // Je 
+  const [listNameInput, setListNameInput] = useState('');
+
+  const SHOPPING_LIST_KEY = 'shoppingLists';
 
   // Načtení seznamů při startu aplikace
   const loadShoppingLists = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('shoppingLists');
-      if (jsonValue != null) {
-        const lists = JSON.parse(jsonValue);
-        const validatedLists = lists.map((list: { id: string; name?: string }) => ({
-          ...list,
-          name: list.name || 'Shopping List', // Pokud je `name` undefined, nastavíme výchozí hodnotu
-        }));
-        setShoppingLists(validatedLists);
-      }
-    } catch (e) {
-      console.log('Failed to load lists from storage.');
-    }
+    const lists = await readItems(SHOPPING_LIST_KEY);
+    setShoppingLists(lists);
   };
 
-  // Uložení seznamů
-  const saveShoppingLists = async (lists: { id: string; name: string }[]) => {
-    try {
-      const jsonValue = JSON.stringify(lists);
-      await AsyncStorage.setItem('shoppingLists', jsonValue);
-    } catch (e) {
-      console.log('Failed to save lists to storage.');
+  // Uložení (vytvoření nového seznamu nebo přejmenování)
+  const saveList = async () => {
+    if (listNameInput.trim() === '') return;
+
+    if (selectedList) {
+      // Přejmenování existujícího seznamu
+      const updatedLists = { ...selectedList, name: listNameInput}
+      await updateItem(SHOPPING_LIST_KEY, updatedLists, 'id')
+    } else {
+      const newList = { id: Math.random().toString(), name: listNameInput, items: [] };
+      await createItem(SHOPPING_LIST_KEY, newList);
+    }
+    loadShoppingLists();
+    setModalVisible(false);
+  };
+
+  // Smazání seznamu
+  const deleteList = async () => {
+    if (selectedList) {
+      await deleteItem(SHOPPING_LIST_KEY, selectedList.id, 'id');
+      loadShoppingLists();
+      setModalVisible(false);
     }
   };
 
@@ -59,38 +65,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setModalVisible(true);
   };
 
-  // Uložení (vytvoření nového seznamu nebo přejmenování)
-  const saveList = () => {
-    if (listNameInput.trim() === '') return;
-
-    if (selectedList) {
-      // Přejmenování existujícího seznamu
-      const updatedLists = shoppingLists.map((list) =>
-        list.id === selectedList.id ? { ...list, name: listNameInput } : list
-      );
-      setShoppingLists(updatedLists);
-      saveShoppingLists(updatedLists);
-    } else {
-      // Vytvoření nového seznamu
-      const newList = { id: Math.random().toString(), name: listNameInput };
-      const updatedLists = [...shoppingLists, newList];
-      setShoppingLists(updatedLists);
-      saveShoppingLists(updatedLists);
-    }
-
-    setModalVisible(false);
-  };
-
-  // Smazání seznamu
-  const deleteList = () => {
-    if (selectedList) {
-      const updatedLists = shoppingLists.filter((list) => list.id !== selectedList.id);
-      setShoppingLists(updatedLists);
-      saveShoppingLists(updatedLists);
-      setModalVisible(false);
-    }
-  };
-
   useEffect(() => {
     loadShoppingLists();
     navigation.setOptions({
@@ -98,18 +72,26 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     });
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      // Načti seznamy pokaždé, když se HomeScreen zobrazí
+      loadShoppingLists();
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Shopping Lists</Text>
 
       <FlatList
         data={shoppingLists}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(list) => list.id}
         renderItem={({ item }) => (
           <ShoppingListTile
             listId={item.id}
             listName={item.name}
-            onPress={() => navigation.navigate('List', { listName: item.name, listId: item.id })}
+            items = {item.items}
+            onPress={() => navigation.navigate('List', { listName: item.name, listId: item.id, items: item.items })}
             onOptionsPress={() => openModal(item.id, item.name)}
           />
         )}
@@ -131,6 +113,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               value={listNameInput}
               onChangeText={(text) => setListNameInput(text)}
               style={styles.input}
+              maxLength={20}
             />
             <TouchableOpacity style={styles.modalSaveButton} onPress={saveList}>
               <Text style={styles.modalSaveButtonText}>{selectedList ? 'Rename' : 'Add List'}</Text>
