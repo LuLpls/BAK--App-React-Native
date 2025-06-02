@@ -8,20 +8,20 @@ import ItemTile from '../components/ItemTile';
 
 type ListScreenProps = {
   route: RouteProp<RootStackParamList, 'List'>;
+  theme: 'light' | 'dark';
 };
 
-const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
+const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
   const { listId } = route.params;
 
   const [items, setItems] = useState<{ id: string; name: string; quantity?: string; unit?: string; purchased: boolean }[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; quantity?: string; unit?: string } | null>(null);
   const [editName, setEditName] = useState('');
-  const [editQuantity, setEditQuantity] = useState<string>(''); 
+  const [editQuantity, setEditQuantity] = useState<string>('');
   const [editUnit, setEditUnit] = useState('');
 
-  // Načtení položek ze seznamu
-  const loadItems = async () => {
+  const loadItems = React.useCallback(async () => {
     try {
       const jsonValue = await AsyncStorage.getItem(`items_${listId}`);
       if (jsonValue != null) {
@@ -30,18 +30,16 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     } catch (e) {
       console.log('Failed to load items from storage.');
     }
-  };
+  }, [listId]);
 
-  // Aktualizace shoppingLists po přidání, úpravě nebo smazání položek
   const updateShoppingLists = async (updatedItems: typeof items) => {
     try {
       const jsonLists = await AsyncStorage.getItem('shoppingLists');
       if (jsonLists != null) {
         const shoppingLists = JSON.parse(jsonLists);
-        const updatedLists = shoppingLists.map((list: { id: string; name: string; items: typeof items }) => 
+        const updatedLists = shoppingLists.map((list: { id: string; name: string; items: typeof items }) =>
           list.id === listId ? { ...list, items: updatedItems } : list
         );
-        console.log("Updating shopping lists: ", updatedLists);
         await AsyncStorage.setItem('shoppingLists', JSON.stringify(updatedLists));
       }
     } catch (e) {
@@ -49,28 +47,23 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     }
   };
 
-  // Uložení položek
   const saveItems = async (updatedItems: typeof items) => {
     try {
       const jsonValue = JSON.stringify(updatedItems);
       await AsyncStorage.setItem(`items_${listId}`, jsonValue);
-      // Aktualizace shoppingLists v AsyncStorage
       updateShoppingLists(updatedItems);
     } catch (e) {
       console.log('Failed to save items to storage.');
     }
   };
 
-  // Otevření modalu pro přidání nebo úpravu
   const openModal = (itemId?: string, itemName?: string, itemQuantity?: string, itemUnit?: string) => {
     if (itemId) {
-      // Úprava existující položky
       setSelectedItem({ id: itemId, name: itemName || '', quantity: itemQuantity, unit: itemUnit });
       setEditName(itemName || '');
       setEditQuantity(itemQuantity || '');
       setEditUnit(itemUnit || '');
     } else {
-      // Přidání nové položky
       setSelectedItem(null);
       setEditName('');
       setEditQuantity('');
@@ -79,9 +72,8 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     setModalVisible(true);
   };
 
-  // Přidání nebo úprava položky
   const saveItem = () => {
-    if (editName.trim() === '') return;
+    if (editName.trim() === '') {return;}
 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
 
@@ -91,7 +83,6 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     }
 
     if (selectedItem) {
-      // Úprava existující položky
       const updatedItems = items.map((item) =>
         item.id === selectedItem.id
           ? { ...item, name: editName, quantity: sanitizedQuantity, unit: editUnit }
@@ -100,7 +91,6 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
       setItems(updatedItems);
       saveItems(updatedItems);
     } else {
-      // Přidání nové položky
       const newItem = {
         id: Math.random().toString(),
         name: editName,
@@ -116,7 +106,6 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     setModalVisible(false);
   };
 
-  // Smazání položky
   const deleteItem = () => {
     if (selectedItem) {
       const updatedItems = items.filter((item) => item.id !== selectedItem.id);
@@ -128,11 +117,99 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [loadItems]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: theme === 'dark' ? '#2c2c2c' : '#f5f5f5',
+    },
+    progressBar: {
+      height: 10,
+      borderRadius: 5,
+      marginBottom: 15,
+    },
+    addButton: {
+      backgroundColor: '#3498db',
+      padding: 15,
+      borderRadius: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      right: 20,
+    },
+    addButtonText: {
+      color: '#fff',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      backgroundColor: theme === 'dark' ? '#1e1e1e' : '#fff',
+      padding: 20,
+      borderRadius: 10,
+      width: '80%',
+    },
+    modalTitle: {
+      fontSize: 18,
+      marginBottom: 10,
+      fontWeight: 'bold',
+      color: theme === 'dark' ? '#ffffff' : '#000000',
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      padding: 10,
+      borderRadius: 5,
+      marginBottom: 10,
+      backgroundColor: theme === 'dark' ? '#2c2c2c' : '#fff',
+      color: theme === 'dark' ? '#ffffff' : '#000000',
+    },
+    modalSaveButton: {
+      backgroundColor: '#3498db',
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    modalSaveButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+    modalDeleteButton: {
+      backgroundColor: '#e74c3c',
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    modalDeleteButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+    modalCancelButton: {
+      backgroundColor: '#E0E0E0',
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+    },
+    modalCancelButtonText: {
+      color: '#000',
+      fontSize: 16,
+    },
+  });
 
   return (
     <View style={styles.container}>
-      {items.length > 0 && <ProgressBar progress={items.length ? items.filter(item => item.purchased).length / items.length : 0} color='#3498db' style={styles.progressBar} />}
+      {items.length > 0 && <ProgressBar progress={items.length ? items.filter(item => item.purchased).length / items.length : 0} color="#3498db" style={styles.progressBar} />}
 
       <FlatList
         data={items}
@@ -151,17 +228,16 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               setItems(updatedItems);
               saveItems(updatedItems);
             }}
-            onOptionsPress={() => openModal(item.id, item.name, item.quantity, item.unit)} // Otevřít modal pro editaci
+            onOptionsPress={() => openModal(item.id, item.name, item.quantity, item.unit)}
+            theme={theme}
           />
         )}
       />
 
-      {/* Button pro přidání nové položky */}
       <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
         <Text style={styles.addButtonText}>+ Add Item</Text>
       </TouchableOpacity>
 
-      {/* Jeden modal pro přidání nebo úpravu položky */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -171,6 +247,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               value={editName}
               onChangeText={setEditName}
               style={styles.modalInput}
+              placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'}
               maxLength={20}
             />
             <TextInput
@@ -178,6 +255,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               value={editQuantity}
               onChangeText={setEditQuantity}
               style={styles.modalInput}
+              placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'}
               keyboardType="numeric"
               maxLength={10}
             />
@@ -186,6 +264,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
               value={editUnit}
               onChangeText={setEditUnit}
               style={styles.modalInput}
+              placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'}
               maxLength={10}
             />
 
@@ -208,90 +287,5 @@ const ListScreen: React.FC<ListScreenProps> = ({ route }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  progressBar: {
-    height: 10,
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  addButton: {
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  modalSaveButton: {
-    backgroundColor: '#3498db',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  modalSaveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  modalDeleteButton: {
-    backgroundColor: '#e74c3c',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  modalDeleteButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  modalCancelButton: {
-    backgroundColor: '#E0E0E0',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  modalCancelButtonText: {
-    color: '#000',
-    fontSize: 16,
-  },
-});
 
 export default ListScreen;

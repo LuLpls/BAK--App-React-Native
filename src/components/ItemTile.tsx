@@ -10,70 +10,75 @@ type ItemProps = {
   purchased: boolean;
   togglePurchased: (id: string) => void;
   onOptionsPress: () => void;
+  theme: 'light' | 'dark'; // 🟢 Přidáno
 };
 
-const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, togglePurchased, onOptionsPress }) => {
+const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, togglePurchased, onOptionsPress, theme }) => {
+  const styles = StyleSheet.create({
+    itemContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      backgroundColor: purchased
+        ? (theme === 'dark' ? '#3a3a3a' : '#e0e0e0')
+        : (theme === 'dark' ? '#1e1e1e' : '#fff'), // 🟢 Dark/Light background
+      marginBottom: 5,
+      borderRadius: 5,
+      justifyContent: 'space-between',
+    },
+    textContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flex: 1,
+    },
+    itemText: {
+      marginLeft: 10,
+      fontSize: 18,
+      flex: 1,
+      color: purchased
+        ? (theme === 'dark' ? '#777777' : '#b0b0b0')
+        : (theme === 'dark' ? '#ffffff' : '#000000'), // 🟢 Text barva
+    },
+    quantityUnitText: {
+      fontSize: 14,
+      marginLeft: 'auto',
+      color: purchased
+        ? (theme === 'dark' ? '#777777' : '#b0b0b0')
+        : (theme === 'dark' ? '#aaaaaa' : '#999999'), // 🟢 Quantity barva
+    },
+    iconTouchable: {
+      paddingHorizontal: 10,
+    },
+  });
+
   return (
-    <View style={[styles.itemContainer, purchased && styles.purchasedBackground]}>
+    <View style={styles.itemContainer}>
       <TouchableOpacity onPress={() => togglePurchased(id)}>
         <Ionicons
           name={purchased ? 'checkmark-circle' : 'ellipse-outline'}
           size={24}
-          color={purchased ? '#3498db' : '#000'}
+          color={purchased
+            ? '#3498db'
+            : (theme === 'dark' ? '#ffffff' : '#000000')} // 🟢 Ikonka podle theme
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={[styles.itemText, purchased && styles.purchasedText]}>{name}</Text>
-        { (quantity || unit) && (
-          <Text style={[styles.quantityUnitText, purchased && styles.purchasedQuantityUnitText]}>
+        <Text style={styles.itemText}>{name}</Text>
+        {(quantity || unit) && (
+          <Text style={styles.quantityUnitText}>
             {quantity && quantity} {unit && unit}
           </Text>
         )}
       </View>
       <TouchableOpacity onPress={onOptionsPress} style={styles.iconTouchable}>
-        <Ionicons name="ellipsis-vertical" size={24} color={purchased ? '#b0b0b0' : '#333'} />
+        <Ionicons
+          name="ellipsis-vertical"
+          size={24}
+          color={theme === 'dark' ? '#ffffff' : '#333333'}
+        />
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#fff',
-    marginBottom: 5,
-    borderRadius: 5,
-    justifyContent: 'space-between',
-  },
-  textContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
-  purchasedBackground: {
-    backgroundColor: '#e0e0e0', 
-  },
-  itemText: {
-    marginLeft: 10,
-    fontSize: 18,
-    flex: 1,
-  },
-  quantityUnitText: {
-    fontSize: 14,
-    color: '#999',
-    marginLeft: 'auto',
-  },
-  purchasedQuantityUnitText: {
-    color: '#b0b0b0', // Even lighter when purchased
-  },
-  purchasedText: {
-    color: '#b0b0b0',
-  },
-  iconTouchable: {
-    paddingHorizontal: 10,
-  },
-});
 
 export default Item;
