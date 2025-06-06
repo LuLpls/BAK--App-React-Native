@@ -1,65 +1,68 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer, DefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
-import { Appearance } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NavigationContainer, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './src/screens/HomeScreen';
 import ListScreen from './src/screens/ListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from './src/types';
-import { LightTheme, DarkTheme } from './src/theme/theme';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-function App(): React.JSX.Element {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+// Custom Light Theme
+const MyLightTheme: Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#f5f5f5',
+    card: '#f5f5f5', // header background
+    text: '#000000', // header text color
+  },
+};
+
+// Custom Dark Theme
+const MyDarkTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#121212',
+    card: '#121212', // header background
+    text: '#ffffff', // header text color
+  },
+};
+
+const App = () => {
+  const systemColorScheme = useColorScheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>(systemColorScheme === 'dark' ? 'dark' : 'light');
 
   useEffect(() => {
     const loadTheme = async () => {
-      const savedTheme = await AsyncStorage.getItem('theme'); // 🟩 Přidáno: Načítání uloženého tématu
+      const savedTheme = await AsyncStorage.getItem('theme');
       if (savedTheme === 'light' || savedTheme === 'dark') {
         setTheme(savedTheme);
       } else {
-        const systemTheme = Appearance.getColorScheme(); // 🟩 Přidáno: Načítání systémového tématu
-        setTheme(systemTheme === 'dark' ? 'dark' : 'light');
+        setTheme(systemColorScheme === 'dark' ? 'dark' : 'light');
       }
     };
-
     loadTheme();
-  }, []);
-
-  const navigationTheme = theme === 'dark' ? NavigationDarkTheme : DefaultTheme;
-  const appTheme = theme === 'dark' ? DarkTheme : LightTheme;
+  }, [systemColorScheme]);
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator initialRouteName="Home"
-      screenOptions={{
-        headerStyle: { backgroundColor: appTheme.colors.background },
-        headerTintColor: appTheme.colors.text,
-      }}>
-        <Stack.Screen
-          name="Home"
-          component={(props: StackScreenProps<RootStackParamList, 'Home'>) =>
-            <HomeScreen {...props} theme={theme} />}
-          options={{ title: 'EzShop' }}
-        />
-        <Stack.Screen
-          name="List"
-          component={(props: StackScreenProps<RootStackParamList, 'List'>) =>
-            <ListScreen {...props} theme={theme} />}
-          options={({ route }) => ({ title: route?.params?.listName || 'Detail of the List' })}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={(props: StackScreenProps<RootStackParamList, 'Settings'>) =>
-            <SettingsScreen {...props} currentTheme={theme} setTheme={setTheme} />}
-          options={{ title: 'Settings' }}
-        />
+    <NavigationContainer theme={theme === 'dark' ? MyDarkTheme : MyLightTheme}>
+      <Stack.Navigator>
+        <Stack.Screen name="Home">
+          {(props) => <HomeScreen {...props} theme={theme} />}
+        </Stack.Screen>
+        <Stack.Screen name="List">
+          {(props) => <ListScreen {...props} theme={theme} />}
+        </Stack.Screen>
+        <Stack.Screen name="Settings">
+          {(props) => <SettingsScreen {...props} currentTheme={theme} setTheme={setTheme} />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
 
 export default App;

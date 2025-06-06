@@ -10,7 +10,7 @@ type ItemProps = {
   purchased: boolean;
   togglePurchased: (id: string) => void;
   onOptionsPress: () => void;
-  theme: 'light' | 'dark'; // 🟢 Přidáno
+  theme: 'light' | 'dark';
 };
 
 const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, togglePurchased, onOptionsPress, theme }) => {
@@ -21,7 +21,7 @@ const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, toggle
       padding: 10,
       backgroundColor: purchased
         ? (theme === 'dark' ? '#3a3a3a' : '#e0e0e0')
-        : (theme === 'dark' ? '#1e1e1e' : '#fff'), // 🟢 Dark/Light background
+        : (theme === 'dark' ? '#1e1e1e' : '#fff'),
       marginBottom: 5,
       borderRadius: 5,
       justifyContent: 'space-between',

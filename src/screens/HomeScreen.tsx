@@ -8,6 +8,8 @@ import { RootStackParamList } from '../types';
 import { createItem, readItems, updateItem, deleteItem } from '../services/storageService';
 import ShoppingListTile from '../components/ShoppingListTile';
 import Header from '../components/Header';
+import i18n from '../localization';
+
 
 type HomeScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Home'>;
@@ -171,7 +173,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, theme }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Shopping Lists</Text>
+      <Text style={styles.title}>{i18n.t('home.title')}</Text>
 
       <FlatList
         data={shoppingLists}
@@ -188,35 +190,37 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, theme }) => {
       />
 
       <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
-        <Text style={styles.addButtonText}>+ New List</Text>
+        <Text style={styles.addButtonText}>{i18n.t('home.newListButton')}</Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {selectedList ? 'Edit List' : 'Add new List'}
+              {selectedList ? i18n.t('home.editList') : i18n.t('home.addList')}
             </Text>
             <TextInput
-              placeholder="Name"
+              placeholder={i18n.t('home.namePlaceholder')}
               value={listNameInput}
               onChangeText={(text) => setListNameInput(text)}
               style={styles.input}
-              placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'} // 🟩 Dynamický placeholder
+              placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'}
               maxLength={20}
             />
             <TouchableOpacity style={styles.modalSaveButton} onPress={saveList}>
-              <Text style={styles.modalSaveButtonText}>{selectedList ? 'Rename' : 'Add List'}</Text>
+              <Text style={styles.modalSaveButtonText}>
+                {selectedList ? i18n.t('home.renameButton') : i18n.t('home.addListButton')}
+              </Text>
             </TouchableOpacity>
 
             {selectedList && (
               <TouchableOpacity style={styles.modalDeleteButton} onPress={deleteList}>
-                <Text style={styles.modalDeleteButtonText}>Delete</Text>
+                <Text style={styles.modalDeleteButtonText}>{i18n.t('home.deleteButton')}</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.modalCancelButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              <Text style={styles.modalCancelButtonText}>{i18n.t('home.cancelButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>

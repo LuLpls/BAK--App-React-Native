@@ -5,6 +5,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { ProgressBar } from 'react-native-paper';
 import ItemTile from '../components/ItemTile';
+import i18n from '../localization';
 
 type ListScreenProps = {
   route: RouteProp<RootStackParamList, 'List'>;
@@ -73,7 +74,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
   };
 
   const saveItem = () => {
-    if (editName.trim() === '') {return;}
+    if (editName.trim() === '') { return; }
 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
 
@@ -209,7 +210,13 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
 
   return (
     <View style={styles.container}>
-      {items.length > 0 && <ProgressBar progress={items.length ? items.filter(item => item.purchased).length / items.length : 0} color="#3498db" style={styles.progressBar} />}
+      {items.length > 0 && (
+        <ProgressBar
+          progress={items.length ? items.filter(item => item.purchased).length / items.length : 0}
+          color="#3498db"
+          style={styles.progressBar}
+        />
+      )}
 
       <FlatList
         data={items}
@@ -235,15 +242,15 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
       />
 
       <TouchableOpacity style={styles.addButton} onPress={() => openModal()}>
-        <Text style={styles.addButtonText}>+ Add Item</Text>
+        <Text style={styles.addButtonText}>{i18n.t('list.addItemButton')}</Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedItem ? 'Edit Item' : 'Add Item'}</Text>
+            <Text style={styles.modalTitle}>{selectedItem ? i18n.t('list.editItem') : i18n.t('list.addItem')}</Text>
             <TextInput
-              placeholder="Name"
+              placeholder={i18n.t('list.namePlaceholder')}
               value={editName}
               onChangeText={setEditName}
               style={styles.modalInput}
@@ -251,7 +258,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
               maxLength={20}
             />
             <TextInput
-              placeholder="Quantity"
+              placeholder={i18n.t('list.quantityPlaceholder')}
               value={editQuantity}
               onChangeText={setEditQuantity}
               style={styles.modalInput}
@@ -260,7 +267,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
               maxLength={10}
             />
             <TextInput
-              placeholder="Unit"
+              placeholder={i18n.t('list.unitPlaceholder')}
               value={editUnit}
               onChangeText={setEditUnit}
               style={styles.modalInput}
@@ -269,17 +276,19 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
             />
 
             <TouchableOpacity style={styles.modalSaveButton} onPress={saveItem}>
-              <Text style={styles.modalSaveButtonText}>{selectedItem ? 'Save' : 'Add Item'}</Text>
+              <Text style={styles.modalSaveButtonText}>
+                {selectedItem ? i18n.t('list.saveButton') : i18n.t('list.addItemButton')}
+              </Text>
             </TouchableOpacity>
 
             {selectedItem && (
               <TouchableOpacity style={styles.modalDeleteButton} onPress={deleteItem}>
-                <Text style={styles.modalDeleteButtonText}>Delete</Text>
+                <Text style={styles.modalDeleteButtonText}>{i18n.t('list.deleteButton')}</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.modalCancelButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              <Text style={styles.modalCancelButtonText}>{i18n.t('list.cancelButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
