@@ -37,14 +37,14 @@ const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, toggle
       flex: 1,
       color: purchased
         ? (theme === 'dark' ? '#777777' : '#b0b0b0')
-        : (theme === 'dark' ? '#ffffff' : '#000000'), // 🟢 Text barva
+        : (theme === 'dark' ? '#ffffff' : '#000000'),
     },
     quantityUnitText: {
       fontSize: 14,
       marginLeft: 'auto',
       color: purchased
         ? (theme === 'dark' ? '#777777' : '#b0b0b0')
-        : (theme === 'dark' ? '#aaaaaa' : '#999999'), // 🟢 Quantity barva
+        : (theme === 'dark' ? '#aaaaaa' : '#999999'),
     },
     iconTouchable: {
       paddingHorizontal: 10,
@@ -59,7 +59,7 @@ const Item: React.FC<ItemProps> = ({ id, name, quantity, unit, purchased, toggle
           size={24}
           color={purchased
             ? '#3498db'
-            : (theme === 'dark' ? '#ffffff' : '#000000')} // 🟢 Ikonka podle theme
+            : (theme === 'dark' ? '#ffffff' : '#000000')}
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>

@@ -8,20 +8,20 @@ import ListScreen from './src/screens/ListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { RootStackParamList } from './src/types';
 
+const appStartTime = performance.now(); // Měření startu aplikace
+
 const Stack = createStackNavigator<RootStackParamList>();
 
-// Custom Light Theme
 const MyLightTheme: Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
     background: '#f5f5f5',
-    card: '#f5f5f5', // header background
-    text: '#000000', // header text color
+    card: '#f5f5f5',
+    text: '#000000',
   },
 };
 
-// Custom Dark Theme
 const MyDarkTheme: Theme = {
   ...DarkTheme,
   colors: {
@@ -49,7 +49,13 @@ const App = () => {
   }, [systemColorScheme]);
 
   return (
-    <NavigationContainer theme={theme === 'dark' ? MyDarkTheme : MyLightTheme}>
+    <NavigationContainer 
+      theme={theme === 'dark' ? MyDarkTheme : MyLightTheme}
+      onReady={() => {
+        const appReadyTime = performance.now();
+        console.log(`App start time: ${appReadyTime - appStartTime} ms`);
+      }}
+    >
       <Stack.Navigator>
         <Stack.Screen name="Home">
           {(props) => <HomeScreen {...props} theme={theme} />}

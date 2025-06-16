@@ -3,7 +3,6 @@ import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, A
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import { ProgressBar } from 'react-native-paper';
 import ItemTile from '../components/ItemTile';
 import i18n from '../localization';
 
@@ -74,6 +73,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
   };
 
   const saveItem = () => {
+    const start = performance.now();
     if (editName.trim() === '') { return; }
 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
@@ -91,6 +91,8 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
       );
       setItems(updatedItems);
       saveItems(updatedItems);
+      const end = performance.now();
+      console.log(`Item update time: ${end - start} ms`);
     } else {
       const newItem = {
         id: Math.random().toString(),
@@ -102,6 +104,8 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
       const updatedItems = [...items, newItem];
       setItems(updatedItems);
       saveItems(updatedItems);
+      const end = performance.now();
+      console.log(`Item creation time: ${end - start} ms`);
     }
 
     setModalVisible(false);
@@ -109,9 +113,12 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
 
   const deleteItem = () => {
     if (selectedItem) {
+      const start = performance.now();
       const updatedItems = items.filter((item) => item.id !== selectedItem.id);
       setItems(updatedItems);
       saveItems(updatedItems);
+      const end = performance.now();
+      console.log(`Item deletion time: ${end - start} ms`);
       setModalVisible(false);
     }
   };
@@ -125,11 +132,6 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
       flex: 1,
       padding: 20,
       backgroundColor: theme === 'dark' ? '#2c2c2c' : '#f5f5f5',
-    },
-    progressBar: {
-      height: 10,
-      borderRadius: 5,
-      marginBottom: 15,
     },
     addButton: {
       backgroundColor: '#3498db',
@@ -210,14 +212,6 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
 
   return (
     <View style={styles.container}>
-      {items.length > 0 && (
-        <ProgressBar
-          progress={items.length ? items.filter(item => item.purchased).length / items.length : 0}
-          color="#3498db"
-          style={styles.progressBar}
-        />
-      )}
-
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
