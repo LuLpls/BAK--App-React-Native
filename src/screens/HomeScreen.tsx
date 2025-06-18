@@ -72,7 +72,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, theme }) => {
   useEffect(() => {
     loadShoppingLists();
     navigation.setOptions({
-      headerRight: () => <Header navigation={navigation} />,
+      headerRight: () => <Header navigation={navigation} theme={theme}  />,
     });
   }, [navigation]);
 

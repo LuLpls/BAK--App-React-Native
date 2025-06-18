@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type ShoppingListTileProps = {
   listName: string;
@@ -10,7 +11,6 @@ type ShoppingListTileProps = {
 };
 
 const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listName, items, onPress, onOptionsPress, theme }) => {
-
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
@@ -32,7 +32,9 @@ const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listName, items, on
       color: theme === 'dark' ? '#ffffff' : '#000000',
     },
     optionsButton: {
-      padding: 10,
+      padding: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   });
 
@@ -41,8 +43,16 @@ const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listName, items, on
       <View style={styles.textContainer}>
         <Text style={styles.listName}>{listName}</Text>
       </View>
-      <TouchableOpacity onPress={onOptionsPress} style={styles.optionsButton}>
-        <Text>⋮</Text>
+      <TouchableOpacity
+        onPress={onOptionsPress}
+        style={styles.optionsButton}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons
+          name="ellipsis-vertical"
+          size={24}
+          color={theme === 'dark' ? '#ccc' : '#555'}
+        />
       </TouchableOpacity>
     </TouchableOpacity>
   );

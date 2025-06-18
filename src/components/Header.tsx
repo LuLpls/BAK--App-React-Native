@@ -7,12 +7,18 @@ import { RootStackParamList } from '../types'; // Uprav si cestu dle své strukt
 
 type HeaderProps = {
   navigation: StackNavigationProp<RootStackParamList>;
+  theme: 'light' | 'dark';
 };
 
-const Header: React.FC<HeaderProps> = ({ navigation }) => {
+const Header: React.FC<HeaderProps> = ({ navigation, theme }) => {
   return (
     <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-      <Ionicons name="settings-outline" size={24} color="#333" style={styles.icon} />
+      <Ionicons
+        name="settings-outline"
+        size={24}
+        color={theme === 'dark' ? '#fff' : '#333'}
+        style={styles.icon}
+      />
     </TouchableOpacity>
   );
 };

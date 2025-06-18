@@ -2,17 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
+import { useLayoutEffect } from 'react';
+import { StackNavigationProp } from '@react-navigation/stack';
+import Header from '../components/Header';
 import { RootStackParamList } from '../types';
 import ItemTile from '../components/ItemTile';
 import i18n from '../localization';
 
 type ListScreenProps = {
   route: RouteProp<RootStackParamList, 'List'>;
+  navigation: StackNavigationProp<RootStackParamList, 'List'>;
   theme: 'light' | 'dark';
 };
 
-const ListScreen: React.FC<ListScreenProps> = ({ route, theme }) => {
-  const { listId } = route.params;
+const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => {
+  const { listId, listName } = route.params;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: listName || 'List',
+      headerRight: () => <Header navigation={navigation} theme={theme} />,
+    });
+  }, [navigation, listName, theme]);
 
   const [items, setItems] = useState<{ id: string; name: string; quantity?: string; unit?: string; purchased: boolean }[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
