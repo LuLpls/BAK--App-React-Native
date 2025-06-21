@@ -74,7 +74,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, theme }) => {
     navigation.setOptions({
       headerRight: () => <Header navigation={navigation} theme={theme}  />,
     });
-  }, [navigation]);
+  }, [navigation, theme]);
 
   useFocusEffect(
     React.useCallback(() => {

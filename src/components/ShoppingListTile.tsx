@@ -10,7 +10,7 @@ type ShoppingListTileProps = {
   theme: 'light' | 'dark';
 };
 
-const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listName, items, onPress, onOptionsPress, theme }) => {
+const ShoppingListTile: React.FC<ShoppingListTileProps> = ({ listName, onPress, onOptionsPress, theme }) => {
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
