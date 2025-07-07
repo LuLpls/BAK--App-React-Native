@@ -17,26 +17,26 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation: _navigation
   const [localTheme, setLocalTheme] = useState<'light' | 'dark'>(currentTheme);
 
   const toggleTheme = async () => {
-    const start = performance.now();
+    const start = performance.now(); // performance test starting
 
     const newTheme = localTheme === 'light' ? 'dark' : 'light';
     setLocalTheme(newTheme);
     setTheme(newTheme);
     await AsyncStorage.setItem('theme', newTheme);
 
-    const end = performance.now();
+    const end = performance.now(); // performance test ending
     console.log(`Theme switch time: ${end - start} ms`);
   };
 
   const changeLanguage = async (language: string) => {
-    const start = performance.now();
+    const start = performance.now(); // performance test starting
 
     i18n.locale = language;
     setSelectedLanguage(language);
     setMenuVisible(false);
     await AsyncStorage.setItem('selectedLanguage', language);
 
-    const end = performance.now();
+    const end = performance.now(); // performance test ending
     console.log(`Language switch time: ${end - start} ms`);
   };
 
@@ -46,8 +46,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation: _navigation
         return 'English';
       case 'cs':
         return 'Čeština';
-      case 'de':
-        return 'Deutsch';
       default:
         return lang;
     }
@@ -134,7 +132,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation: _navigation
           >
             <Menu.Item onPress={() => changeLanguage('en')} title="English" />
             <Menu.Item onPress={() => changeLanguage('cs')} title="Čeština" />
-            <Menu.Item onPress={() => changeLanguage('de')} title="Deutsch" />
           </Menu>
         </View>
       </View>

@@ -84,7 +84,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => 
   };
 
   const saveItem = () => {
-    const start = performance.now();
+    const start = performance.now(); // performance test starting
     if (editName.trim() === '') { return; }
 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
@@ -102,7 +102,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => 
       );
       setItems(updatedItems);
       saveItems(updatedItems);
-      const end = performance.now();
+      const end = performance.now(); // performance test ending
       console.log(`Item update time: ${end - start} ms`);
     } else {
       const newItem = {
@@ -115,7 +115,7 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => 
       const updatedItems = [...items, newItem];
       setItems(updatedItems);
       saveItems(updatedItems);
-      const end = performance.now();
+      const end = performance.now(); // performance test ending
       console.log(`Item creation time: ${end - start} ms`);
     }
 
@@ -124,11 +124,11 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => 
 
   const deleteItem = () => {
     if (selectedItem) {
-      const start = performance.now();
+      const start = performance.now(); // performance test starting
       const updatedItems = items.filter((item) => item.id !== selectedItem.id);
       setItems(updatedItems);
       saveItems(updatedItems);
-      const end = performance.now();
+      const end = performance.now(); // performance test ending
       console.log(`Item deletion time: ${end - start} ms`);
       setModalVisible(false);
     }

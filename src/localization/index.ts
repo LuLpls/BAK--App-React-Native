@@ -3,12 +3,10 @@ import * as Localization from 'react-native-localize';
 
 import en from './en';
 import cs from './cs';
-import de from './de';
 
 const i18n = new I18n({
   en,
   cs,
-  de,
 });
 
 // Nastavení fallbacků
