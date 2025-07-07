@@ -8,7 +8,7 @@ import ListScreen from './src/screens/ListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { RootStackParamList } from './src/types';
 
-const appStartTime = performance.now(); // Měření startu aplikace
+const appStartTime = performance.now(); // performance test starting
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -27,8 +27,8 @@ const MyDarkTheme: Theme = {
   colors: {
     ...DarkTheme.colors,
     background: '#121212',
-    card: '#121212', // header background
-    text: '#ffffff', // header text color
+    card: '#121212',
+    text: '#ffffff',
   },
 };
 
@@ -49,10 +49,10 @@ const App = () => {
   }, [systemColorScheme]);
 
   return (
-    <NavigationContainer 
+    <NavigationContainer
       theme={theme === 'dark' ? MyDarkTheme : MyLightTheme}
       onReady={() => {
-        const appReadyTime = performance.now();
+        const appReadyTime = performance.now(); // performance test ending
         console.log(`App start time: ${appReadyTime - appStartTime} ms`);
       }}
     >
