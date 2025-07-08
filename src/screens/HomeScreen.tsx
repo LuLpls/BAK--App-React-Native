@@ -205,7 +205,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, theme }) => {
               onChangeText={(text) => setListNameInput(text)}
               style={styles.input}
               placeholderTextColor={theme === 'dark' ? '#aaaaaa' : '#999999'}
-              maxLength={20}
+              maxLength={30}
             />
             <TouchableOpacity style={styles.modalSaveButton} onPress={saveList}>
               <Text style={styles.modalSaveButtonText}>

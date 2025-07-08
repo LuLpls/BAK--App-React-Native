@@ -90,9 +90,14 @@ const ListScreen: React.FC<ListScreenProps> = ({ route, navigation, theme }) => 
     const sanitizedQuantity = editQuantity.trim() !== '' ? editQuantity.replace(',', '.') : '';
 
     if (sanitizedQuantity !== '' && isNaN(Number(sanitizedQuantity))) {
-      Alert.alert('Invalid Input', 'Please enter a valid number for the quantity.');
+      Alert.alert(i18n.t('validation.error'), i18n.t('validation.invalidQuantity'));
       return;
     }
+
+    if (sanitizedQuantity !== '' && Number(sanitizedQuantity) < 0) {
+    Alert.alert(i18n.t('validation.error'), i18n.t('validation.negativeQuantity'));
+    return;
+  }
 
     if (selectedItem) {
       const updatedItems = items.map((item) =>

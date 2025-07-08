@@ -26,4 +26,9 @@ export default {
       darkMode: 'Dark Mode',
       language: 'Language',
     },
+    "validation": {
+      "error": "Validation Error",
+      "invalidQuantity": "Please enter a valid number for the quantity.",
+      "negativeQuantity": "Quantity cannot be negative."
+    }
   };

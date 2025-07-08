@@ -26,4 +26,9 @@ export default {
       darkMode: 'Tmavý režim',
       language: 'Jazyk',
     },
+    "validation": {
+      "error": "Chyba validace",
+      "invalidQuantity": "Zadejte platné číslo pro množství.",
+      "negativeQuantity": "Množství nesmí být záporné."
+    }
   };
